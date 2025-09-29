@@ -15,15 +15,22 @@
 #define IN      1
 #define OUT     0
 
+// int bool_split(char c) {
+//     if(c == ' ' || c == ',' || c == '.' || c == '!' || c == ';' ||
+//             c == '\'' || c == '\"' || c == '-' ||
+//             c == '\n' || c == '\t' || c == '+' ||
+//             c == '{' || c == '}' || c == '(' || 
+//             c == ')' || c == '[' || c == ']')
+//        return 1;
+//     else 
+//         return 0;
+// }
+
 int bool_split(char c) {
-    if(c == ' ' || c == ',' || c == '.' || c == '!' || c == ';' ||
-            c == '\'' || c == '\"' || c == '-' ||
-            c == '\n' || c == '\t' || c == '+' ||
-            c == '{' || c == '}' || c == '(' || 
-            c == ')' || c == '[' || c == ']')
-       return 1;
-    else 
+    if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
         return 0;
+    else 
+        return 1;
 }
 int count_word(char *filename) {
     int res = 0;
