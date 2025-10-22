@@ -2,6 +2,9 @@
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         "stdio.h": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "array": "c",
+        "random": "c",
+        "numeric": "c"
     }
 }
