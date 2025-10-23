@@ -5,6 +5,7 @@
         "algorithm": "c",
         "array": "c",
         "random": "c",
-        "numeric": "c"
+        "numeric": "c",
+        "inet.h": "c"
     }
 }
