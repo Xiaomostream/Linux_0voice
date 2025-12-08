@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -52,7 +50,7 @@ int islistenfd(int fd, int *fds) {
 	return 0;
 }
 
-// ./tcp_server 
+// ./tcp_server 8888
 
 int main(int argc, char *argv[]) {
 
@@ -94,26 +92,7 @@ int main(int argc, char *argv[]) {
 
 		sockfds[i] = sockfd;
 	}
-	// 
 
-#if 0
-
-	while (1) {
-
-		struct sockaddr_in client_addr;
-		memset(&client_addr, 0, sizeof(struct sockaddr_in));
-		socklen_t client_len = sizeof(client_addr);
-
-		int clientfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_len);
-		
-		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, client_routine, &clientfd);
-
-	}
-	
-#else
-
-	
 	struct epoll_event events[EPOLL_SIZE] = {0};
 
 	while (1) {
@@ -123,7 +102,7 @@ int main(int argc, char *argv[]) {
 
 		int i = 0;
 		for (i = 0;i < nready;i ++) {
-
+			// 判断当前sockfd是否为listen，即是否在数组sockfd[]里
 			int sockfd = islistenfd(events[i].data.fd, sockfds);
 			if (sockfd) { // listen 2
 
@@ -175,10 +154,6 @@ int main(int argc, char *argv[]) {
 		}
 
 	}
-	
-
-#endif
-	
 	return 0;
 }
 

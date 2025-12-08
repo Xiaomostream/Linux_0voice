@@ -13,6 +13,7 @@
 #define DNS_HOST		  	0x01
 #define DNS_CNAME			0x05
 
+// DNS 报文头部
 struct dns_header{
     //16位，两个字节 --> short
     unsigned short id; //会话id
@@ -23,19 +24,22 @@ struct dns_header{
     unsigned short additional; //附加资源记录数
 };
 
+// DNS 查询部分
 struct dns_question{
     int length;
-    unsigned short qtype;
-    unsigned short qclass;
-    unsigned char *name; //长度不固定, 存储域名
+    unsigned short qtype;    // 查询类型（1=A记录，即IPv4地址）
+    unsigned short qclass;   // 查询类（1=Internet，即互联网地址）
+    unsigned char *name;     //长度不固定, 存储域名（按DNS协议格式存储，如"www.baidu.com"转换为"3www5baidu3com0"）
 };
 
+// 存储解析后的域名和对应的 IP 地址：
 struct dns_item {
 	char *domain;
 	char *ip;
 };
 
 // client send to dns_server
+// 创建 DNS 头部
 int dns_creat_header(struct dns_header *header) {
     if(header == NULL) return -1;
     memset(header, 0, sizeof(struct dns_header));
@@ -50,6 +54,8 @@ int dns_creat_header(struct dns_header *header) {
     return 0;
 }
 
+// 创建查询部分 
+// 将用户输入的域名（如www.0voice.com）转换为 DNS 协议要求的格式
 // hostname: www.0voice.com ==> name: 3www60voice3com0
 int dns_create_question(struct dns_question *question, const char *hostname) {
 

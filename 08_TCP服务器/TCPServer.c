@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
                 socklen_t client_len = sizeof(client_addr);
                 int clientfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_len);
                 
-                ev.events = EPOLLIN || EPOLLET; //使用边沿触发，如果有数据，一次性读完
+                ev.events = EPOLLIN | EPOLLET; //使用边沿触发，如果有数据，一次性读完
                 ev.data.fd = clientfd;
                 epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &ev);
             }
@@ -145,13 +145,11 @@ int main(int argc, char *argv[]) {
                     ev.events = EPOLLIN | EPOLLET;
                     ev.data.fd = clientfd;
                     epoll_ctl(epfd, EPOLL_CTL_DEL, clientfd, &ev);
-                    break;
                 } else if(len == 0) { //disconnect
                     close(clientfd);
                     ev.events = EPOLLIN | EPOLLET;
                     ev.data.fd = clientfd;
                     epoll_ctl(epfd, EPOLL_CTL_DEL, clientfd, &ev);
-                    break;
                 } else {
                     printf("Recv: %s %d byte(s)\n", buffer, len);
                 }

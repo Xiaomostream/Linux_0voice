@@ -6,6 +6,7 @@
         "array": "c",
         "random": "c",
         "numeric": "c",
-        "inet.h": "c"
+        "inet.h": "c",
+        "socket.h": "c"
     }
 }
