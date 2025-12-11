@@ -8,5 +8,6 @@
         "numeric": "c",
         "inet.h": "c",
         "socket.h": "c"
-    }
+    },
+    "clangd.path": "/usr/bin/clangd"
 }
