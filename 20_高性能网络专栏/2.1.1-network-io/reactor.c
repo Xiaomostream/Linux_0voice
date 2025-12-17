@@ -8,13 +8,12 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "server.h"
 
-#define BUFFER_LENGTH       1024
 #define CONNECTION_SIZE     1048576 // 1024*1024
-#define MAX_PORTS           100
+#define MAX_PORTS           20
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
-typedef int (*RCALLBACK)(int fd);
 
 int accept_cb(int fd);
 int recv_cb(int fd);
@@ -23,25 +22,6 @@ int send_cb(int fd);
 int epfd = 0; //epfd设为全局变量
 
 struct timeval tbegin;
-struct conn {
-    // 什么事件执行什么回调函数！
-    int fd;
-    
-    char rbuffer[BUFFER_LENGTH];
-    int rlength;
-
-    char wbuffer[BUFFER_LENGTH];
-    int wlength;
-
-    // EPOLLOUT
-    RCALLBACK send_callback;
-
-    // EPOLLIN
-    union{
-        RCALLBACK recv_callback;
-        RCALLBACK accept_callback;
-    } r_action;
-};
 
 struct conn conn_list[CONNECTION_SIZE] = {0};
 
@@ -103,7 +83,7 @@ int accept_cb(int fd) {
     //epoll管理clientfd的EPOLLIN
     set_event(clientfd, EPOLLIN);
 #elif 1
-    event_register(clientfd, EPOLLIN | EPOLLET); //默认是水平触发，| EPOLLET切换为水平触发
+    event_register(clientfd, EPOLLIN); //默认是水平触发，| EPOLLET切换为水平触发
 #endif
     if((clientfd%1000) == 0) { //每一千条连接打印一次信息
         //struct timeval current;
@@ -125,14 +105,25 @@ int recv_cb(int fd) {
 
         epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL); // unfinished
         return -1;
+    } else if(count < 0) { 
+        //阻塞的IO为什么会返回-1？原因是errno: 104, Connection reset by peer
+        //也就是 wrk，关闭连接时发送了 reset, 连接被重置，我们把他close掉就可。
+        printf("client: %d, errno: %d, %s\n", fd, errno, strerror(errno));
+        close(fd);
+        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL); // unfinished
+
+        return 0;
     }
     conn_list[fd].rlength = count;
     // printf("Recv: %s\n", conn_list[fd].rbuffer);
 
-#if 1 //echo
-
+#if 0 //echo
     conn_list[fd].wlength = conn_list[fd].rlength;
     memcpy(conn_list[fd].wbuffer, conn_list[fd].rbuffer, conn_list[fd].wlength);
+#elif 0
+    http_request(&conn_list[fd]);
+#else
+    ws_request(&conn_list[fd]);
 #endif    
     set_event(fd, EPOLLOUT, 0);
 
@@ -140,9 +131,25 @@ int recv_cb(int fd) {
 }
 
 int send_cb(int fd) {
-    int count = send(fd, conn_list[fd].wbuffer, conn_list[fd].wlength, 0);
+
+#if 1
+    http_response(&conn_list[fd]);
+#endif
+    int count = 0;
+    // 状态机
+    if(conn_list[fd].status == 1) {
+        //printf("SEND: %s\n", conn_list[fd].wbuffer);
+        count = send(fd, conn_list[fd].wbuffer, conn_list[fd].wlength, 0);
+        set_event(fd, EPOLLOUT, 0);
+    } else if(conn_list[fd].status == 2) {
+        set_event(fd, EPOLLOUT, 0);
+    } else if(conn_list[fd].status == 0) {
+        if(conn_list[fd].wlength != 0) {
+            count = send(fd, conn_list[fd].wbuffer, conn_list[fd].wlength, 0);
+        }
+        set_event(fd, EPOLLIN, 0);
+    }
     
-    set_event(fd, EPOLLIN, 0);
     return count;
 }
 int init_server(unsigned short port) {
