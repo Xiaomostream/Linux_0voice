@@ -9,6 +9,6 @@
         "inet.h": "c",
         "socket.h": "c"
     },
-    "clangd.path": "/home/chan/clangdk/bin/clangd",
+    "clangd.path": "/usr/bin/clangd",
     "clangd.useScriptAsExecutable": true
 }
