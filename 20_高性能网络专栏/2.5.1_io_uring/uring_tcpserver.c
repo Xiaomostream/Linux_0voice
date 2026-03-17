@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
             } else if(result.event == EVENT_READ) {
 
                 int ret = entries->res;
-                printf("set_event_recv: %s ret: %d\n", buffer, ret);
+                //printf("set_event_recv: %s ret: %d\n", buffer, ret);
 
                 if(ret == 0) {
                     close(result.fd);
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
                 
             } else if(result.event == EVENT_WRITE) {
                 int ret = entries->res;
-                printf("set_event_send: %s ret: %d\n", buffer, ret);
+                //printf("set_event_send: %s ret: %d\n", buffer, ret);
                 set_event_recv(&ring, result.fd, buffer, BUFFER_LENGTH, 0);
             }
             
