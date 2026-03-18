@@ -41,9 +41,13 @@ int connect_tcpserver(const char *ip, int port) {
 }
 
 #define TEST_MESSAGE    "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz\r\n"
-#define RBUFFER_LENGTH  120
+#define RBUFFER_LENGTH  2048
+#define WBUFFER_LENGTH  2048
+
 int send_recv_tcppkt(int fd) {
-    int ret = send(fd, TEST_MESSAGE, strlen(TEST_MESSAGE), 0);
+    
+#if 0
+    int ret = send(fd, TEST_MESSAGE, strlen(TEST_MESSAGE));
     if(ret < 0) {
         exit(1);
     }
@@ -56,6 +60,26 @@ int send_recv_tcppkt(int fd) {
         printf("failed: '%s' != '%s'\n", rbuffer, TEST_MESSAGE);
         return -1;
     }
+#else
+    char wbuffer[WBUFFER_LENGTH] = {0};
+    //每次发64*4=256个包
+    for (int i = 0; i < 1; i ++ ) {
+        strcpy(wbuffer + i*strlen(TEST_MESSAGE), TEST_MESSAGE);
+    }
+    int ret = send(fd, wbuffer, strlen(wbuffer), 0);
+    if(ret < 0) {
+        exit(1);
+    }
+    char rbuffer[RBUFFER_LENGTH] = {0};
+    ret = recv(fd, rbuffer, RBUFFER_LENGTH, 0);
+    if(ret <= 0) {
+        exit(1);
+    }
+    if(strcmp(rbuffer, wbuffer) != 0) {
+        printf("failed: '%s' != '%s'\n", rbuffer, TEST_MESSAGE);
+        return -1;
+    }
+#endif
     return 0;
 }
 
@@ -115,21 +139,22 @@ int main(int argc, char *argv[]) {
 
     pthread_t *ptid = malloc(ctx.pthreadnum * sizeof(pthread_t)); //在堆上定义
     //pthread_t ptid[10] = {0}; //在栈上定义 
-
+    
     struct timeval tv_begin;
     gettimeofday(&tv_begin, NULL);
     for (int i = 0; i < ctx.pthreadnum; i ++ ) {
         pthread_create(&ptid[i], NULL, test_qps_entry, &ctx);
     }
+
     for (int i = 0; i < ctx.pthreadnum; i ++ ) {
         pthread_join(ptid[i], NULL);
     }
-
+    
     struct timeval tv_end;
     gettimeofday(&tv_end, NULL);
 
     int time_used = TIME_SUB_MS(tv_end, tv_begin);
-    printf("success: %d, failed: %d, time_used: %d\n", ctx.requestion-ctx.failed, ctx.failed, time_used);
+    printf("success: %d, failed: %d, time_used: %d, qps: %d\n", ctx.requestion-ctx.failed, ctx.failed, time_used, ctx.requestion*1000/time_used);
 
 clean:
     free(ptid);

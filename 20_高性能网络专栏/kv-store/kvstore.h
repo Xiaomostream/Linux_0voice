@@ -1,0 +1,12 @@
+
+#ifndef __KV_STORE_H__
+#define __KV_STORE_H__
+
+const char *command[] = {
+    "SET", "GET", "DEL", "MOD", "EXIST"
+};
+const char *response[] = {
+
+};
+
+#endif

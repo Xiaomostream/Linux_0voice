@@ -28,7 +28,11 @@ int init_server(unsigned short port) {
         return -1;
     }
 
-    listen(sockfd, 10);
+    int ret = listen(sockfd, 10);
+    if(ret != 0) {
+        perror("listen failed");
+        return -1;
+    }
     printf("listen finished: %d\n", sockfd);
 
     return sockfd;
@@ -71,8 +75,10 @@ int main(int argc, char *argv[]) {
     //     printf("Params error");
     //     return 0;
     // }
-    int sockfd = init_server(8888);
-
+    int sockfd = init_server(8889);
+    if(sockfd == -1) {
+        return 0;
+    }
     struct io_uring_params params;
     memset(&params, 0, sizeof(params));
     
@@ -117,7 +123,7 @@ int main(int argc, char *argv[]) {
             } else if(result.event == EVENT_READ) {
 
                 int ret = entries->res;
-                //printf("set_event_recv: %s ret: %d\n", buffer, ret);
+                printf("ret: %d, set_event_recv: %s \n", ret, buffer);
 
                 if(ret == 0) {
                     close(result.fd);
