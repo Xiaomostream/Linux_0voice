@@ -5,7 +5,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-extern int kvs_protocol(char *msg, int length, char *response);
+
+typedef int (*msg_handler)(char *msg, int length, char *response);
+static msg_handler kvs_handler;
 
 
 #define ENTRIES_LENGTH 1024
@@ -72,12 +74,13 @@ int set_event_accept(struct io_uring *ring, int sockfd, struct sockaddr *addr, s
     io_uring_prep_accept(sqe, sockfd, addr, addrlen, flags);
     memcpy(&sqe->user_data, &accept_info, sizeof(struct conn_info));
 }
-int main(int argc, char *argv[]) {
-    if(argc < 2) {
-        printf("Params error");
-        return 0;
-    }
-    int sockfd = init_server(atoi(argv[1]));
+int proactor_start(unsigned int port, msg_handler handler) {
+    // if(argc < 2) {
+    //     printf("Params error");
+    //     return 0;
+    // }
+    kvs_handler = handler;
+    int sockfd = init_server(port);
     if(sockfd == -1) {
         return 0;
     }
@@ -132,7 +135,7 @@ int main(int argc, char *argv[]) {
                 } else if(ret > 0) {
                      //printf("ret: %d, set_event_recv: %s \n", ret, buffer);
                      
-                     ret = kvs_protocol(buffer, ret, response);
+                     ret = kvs_handler(buffer, ret, response);
 
                      set_event_send(&ring, result.fd, buffer, ret, 0);
                 }

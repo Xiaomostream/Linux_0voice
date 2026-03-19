@@ -10,18 +10,20 @@
 #include <unistd.h>
 #include "server.h"
 
-#define CONNECTION_SIZE     1048576 // 1024*1024
+#define CONNECTION_SIZE     1024 // 1024*1024
 #define MAX_PORTS           1 //20
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 #if ENABLE_KVSTORE
 
-extern int kvs_protocol(char *msg, int length, char *response);
+typedef int (*msg_handler)(char *msg, int length, char *response);
+
+static msg_handler kvs_handler;
 
 int kvs_request(struct conn *c) {
-    printf("xiaomo recv %d : %s\n", c->rlength, c->rbuffer);
+    printf("recv %d : %s\n", c->rlength, c->rbuffer);
 
-    c->wlength = kvs_protocol(c->rbuffer, c->rlength, c->wbuffer);
+    c->wlength = kvs_handler(c->rbuffer, c->rlength, c->wbuffer);
 
 }
 int kvs_response(struct conn *c) {
@@ -77,7 +79,7 @@ int accept_cb(int fd) {
 
     int clientfd = accept(fd, (struct sockaddr*)&clientaddr, &len);
      
-    // printf("Clientfd: %d connected\n", clientfd);
+    //printf("Clientfd: %d connected, sockfd: %d\n", clientfd, fd);
     if(clientfd < 0) {
         printf("accept errno: %d\n", errno);
         return -1;
@@ -193,16 +195,16 @@ int init_server(unsigned short port) {
 
     return sockfd;
 }
-int main(int argc, char *argv[]) {
-    if(argc < 2) {
-        printf("param error!\n");
-    }
 
+//把reactor的main函数封装为函数接口
+int reactor_start(unsigned int port, msg_handler handler) {
+    kvs_handler = handler;
+    //printf("kvs_handler\n");
     // register : 我们关注 sockfd 这个io 的 EPOLLIN 这个事件, 使用epoll来管理
     epfd = epoll_create(1);
 
     for (int i = 0; i < MAX_PORTS; i ++ ) {
-        int sockfd = init_server(atoi(argv[1])+i);
+        int sockfd = init_server(port+i);
 
         conn_list[sockfd].fd = sockfd;
         conn_list[sockfd].r_action.recv_callback = accept_cb;
