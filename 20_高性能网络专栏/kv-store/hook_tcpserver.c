@@ -18,7 +18,7 @@ void server_reader(void *arg) {
 		char buf[1024] = {0};
 		ret = recv(fd, buf, 1024, 0);
 		if (ret > 0) {
-			printf("read from server: %.*s\n", ret, buf);
+			//printf("read from server: %.*s\n", ret, buf);
 
 
 			char response[1024] = {0};
