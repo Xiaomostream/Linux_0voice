@@ -38,6 +38,7 @@ int kvs_split_token(char *msg, char *tokens[]) {
     int idx = 0;
     while(token != NULL) {
         tokens[idx ++] = token;
+        //printf("tokens[%d]: %s\n", idx-1, token);
         token = strtok(NULL, " "); 
     }
     return idx;
@@ -49,6 +50,7 @@ int kvs_split_token(char *msg, char *tokens[]) {
 // tokens[2] : Value
 int kvs_fliter_protocol(char **tokens, int count, char *response) {
     if(tokens == NULL || count == 0 || response == NULL) return -1;
+
 
     int cmd;
     for (cmd = KVS_CMD_START; cmd < KVS_CMD_COUNT; cmd ++) {
@@ -111,6 +113,7 @@ int kvs_fliter_protocol(char **tokens, int count, char *response) {
             }
             break;
     }
+    //printf("## response:%s\n", response);
     return length;
 }
 /*
@@ -147,8 +150,11 @@ int init_kvengine(void) {
 // port, kvs_protocol
 int main(int argc, char *argv[]) {
 
-    if(argc != 2) return -1;
-    unsigned int port = atoi(argv[1]);
+    if(argc != 2) {
+        printf("Params error!\n");
+        return -1;
+    }
+    unsigned short port = atoi(argv[1]);
 
     init_kvengine();
 

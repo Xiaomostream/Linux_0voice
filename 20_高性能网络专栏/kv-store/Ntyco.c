@@ -20,13 +20,13 @@ void server_reader(void *arg) {
 		char buf[1024] = {0};
 		ret = recv(fd, buf, 1024, 0);
 		if (ret > 0) {
-			//printf("read from server: %.*s\n", ret, buf);
+			//printf("read from server %d: %s\r\n", ret, buf);
 
 
 			char response[1024] = {0};
 			int slength = kvs_handler(buf, ret, response);
 
-			ret = send(fd, buf, strlen(buf), 0);
+			ret = send(fd, response, strlen(response), 0);
 			if (ret == -1) {
 				close(fd);
 				break;
@@ -71,7 +71,7 @@ void server(void *arg) {
 }
 
 
-int Ntyco_start(unsigned int port, msg_handler handler) {
+int Ntyco_start(unsigned short port, msg_handler handler) {
 	// if(argc != 2) {
 	// 	return 0;
 	// }

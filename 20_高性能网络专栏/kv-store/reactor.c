@@ -21,7 +21,7 @@ typedef int (*msg_handler)(char *msg, int length, char *response);
 static msg_handler kvs_handler;
 
 int kvs_request(struct conn *c) {
-    printf("recv %d : %s\n", c->rlength, c->rbuffer);
+    //printf("recv %d : %s\n", c->rlength, c->rbuffer);
 
     c->wlength = kvs_handler(c->rbuffer, c->rlength, c->wbuffer);
 
@@ -198,7 +198,7 @@ int r_init_server(unsigned short port) {
 }
 
 //把reactor的main函数封装为函数接口
-int reactor_start(unsigned int port, msg_handler handler) {
+int reactor_start(unsigned short port, msg_handler handler) {
     kvs_handler = handler;
     //printf("kvs_handler\n");
     // register : 我们关注 sockfd 这个io 的 EPOLLIN 这个事件, 使用epoll来管理

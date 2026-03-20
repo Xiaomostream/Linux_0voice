@@ -11,7 +11,7 @@
 #define NETWORK_NTYCO   1
 #define NETWORK_PROACTOR 2
 
-#define NETWORK_SELECT  PROACTOR
+#define NETWORK_SELECT NETWORK_REACTOR
 
 #define KVS_MAX_TOKENS  128
 
@@ -19,9 +19,9 @@
 
 typedef int (*msg_handler)(char *msg, int length, char *response);
 
-extern int reactor_start(unsigned int port, msg_handler handler);
-extern int Ntyco_start(unsigned int port, msg_handler handler);
-extern int proactor_start(unsigned int port, msg_handler handler);
+extern int reactor_start(unsigned short port, msg_handler handler);
+extern int Ntyco_start(unsigned short port, msg_handler handler);
+extern int proactor_start(unsigned short port, msg_handler handler);
 
 
 #if ENABLE_ARRAY
