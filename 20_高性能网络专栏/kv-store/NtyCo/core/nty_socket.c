@@ -86,7 +86,7 @@ static int nty_poll_inner(struct pollfd *fds, nfds_t nfds, int timeout) {
 
 	nty_schedule *sched = nty_coroutine_get_sched();
 	if (sched == NULL) {
-		printf("scheduler not exit!\n");
+		//printf("scheduler not exit!\n");
 		return -1;
 	}
 	

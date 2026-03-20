@@ -114,6 +114,7 @@ int accept_cb(int fd) {
 }
 
 int recv_cb(int fd) {
+    memset(conn_list[fd].rbuffer, 0, BUFFER_LENGTH);
     int count = recv(fd, conn_list[fd].rbuffer, BUFFER_LENGTH, 0);
     if(count == 0) { //disconnect
         printf("client %d disconnect\n", fd);
@@ -180,7 +181,7 @@ int send_cb(int fd) {
 #endif
     return count;
 }
-int init_server(unsigned short port) {
+int r_init_server(unsigned short port) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in servaddr;
     servaddr.sin_family = AF_INET;
@@ -204,7 +205,7 @@ int reactor_start(unsigned int port, msg_handler handler) {
     epfd = epoll_create(1);
 
     for (int i = 0; i < MAX_PORTS; i ++ ) {
-        int sockfd = init_server(port+i);
+        int sockfd = r_init_server(port+i);
 
         conn_list[sockfd].fd = sockfd;
         conn_list[sockfd].r_action.recv_callback = accept_cb;
