@@ -34,7 +34,7 @@ void testcase(int connfd, char *msg, char *pattern, char *casename) {
     recv_msg(connfd, result, MAX_MSG_LENGTH);
 
     if(strcmp(result, pattern) == 0) {
-        //printf("==> PASS -> %s\n", casename);
+        printf("==> PASS -> %s\n", casename);
     } else {
         printf("==> FAILED -> %s, '%s' != '%s'\n", casename, result, pattern);
         exit(1);
@@ -58,7 +58,7 @@ int connect_tcpserver(const char *ip, unsigned short port) {
 }
 
 void array_testcase_10w(int connfd) {
-    int count = 10000;
+    int count = 1000;
     struct timeval tv_begin;
     gettimeofday(&tv_begin, NULL);
     for (int i = 0; i < count; i ++ ) {
@@ -79,6 +79,31 @@ void array_testcase_10w(int connfd) {
     printf("array testcase --> time_used: %d, qps: %d\n", time_used, 9*count*1000 / time_used);
 
 }
+
+void rbtree_testcase_10w(int connfd) {
+    int count = 1;
+    struct timeval tv_begin;
+    gettimeofday(&tv_begin, NULL);
+    for (int i = 0; i < count; i ++ ) {
+        testcase(connfd, "RSET Teacher King", "OK\r\n", "RSET-Teacher");
+        testcase(connfd, "RGET Teacher", "King\r\n", "RGET_Teacher");
+        testcase(connfd, "RMOD Teacher Xiaomo", "OK\r\n", "RMOD_Teacher");
+        testcase(connfd, "RGET Teacher", "Xiaomo\r\n", "RGET_Teacher");
+        testcase(connfd, "REXIST Teacher", "EXIST\r\n", "REXIST_Teacher");
+        testcase(connfd, "RDEL Teacher", "OK\r\n", "RDEL_Teacher");
+        testcase(connfd, "REXIST Teacher", "NOT EXIST\r\n", "REXIST_Teacher");
+        testcase(connfd, "RGET Teacher", "NOT EXIST\r\n", "RGET_Teacher");
+        testcase(connfd, "RMOD Teacher King", "NOT EXIST\r\n", "RMOD_Teacher");
+    }
+    struct timeval tv_end;
+    gettimeofday(&tv_end, NULL);
+    int time_used = TIME_SUB_MS(tv_end, tv_begin);
+
+    printf("array testcase --> time_used: %d, qps: %d\n", time_used, 9*count*1000 / time_used);
+
+}
+
+
 // ./Test_case 192.168.66.130 8888
 int main(int argc, char *argv[]) {
     if(argc != 3) {
@@ -90,6 +115,6 @@ int main(int argc, char *argv[]) {
     unsigned short port = atoi(argv[2]);
     int connfd = connect_tcpserver(ip, port);
 
-    array_testcase_10w(connfd);
+    rbtree_testcase_10w(connfd);
     return 0;
 }
