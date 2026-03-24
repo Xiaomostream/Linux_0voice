@@ -441,6 +441,8 @@ void kvs_rbtree_destory(kvs_rbtree_t *inst) {
 char* kvs_rbtree_get(kvs_rbtree_t *inst, char *key) {
 	if(!inst || !key) return NULL;
 	rbtree_node *node = rbtree_search(inst, key);
+	if(!node) return NULL; //不存在
+	if(node == inst->nil) return NULL;
 	return node->value;
 }
 int kvs_rbtree_set(kvs_rbtree_t *inst, char *key, char *value) {
@@ -473,8 +475,12 @@ int kvs_rbtree_del(kvs_rbtree_t *inst, char *key) {
 int kvs_rbtree_mod(kvs_rbtree_t *inst, char *key, char *value) {
 	if(!inst || !key || !value) return -1;
 	rbtree_node *node = rbtree_search(inst, key);
-	if(!node) return 1; //not exist
+	if(!node) return 1; 
+	//not exist => 出现bug， 就是虽然之前某个节点被删除了， 且现在rbtree的节点数为0，此时search返回红黑树的nil节点
+	//即该rbtree树非空，但是没有一个key
+	if(node == inst->nil) return 1;
 
+	//printf("Key: %s, Value: %s\n", node->key, (char *)node->value); 
 	kvs_free(node->value);
 	node->value = kvs_malloc(strlen(value)+1);
 	if(!node->value) return -2;
@@ -485,8 +491,9 @@ int kvs_rbtree_mod(kvs_rbtree_t *inst, char *key, char *value) {
 }
 int kvs_rbtree_exist(kvs_rbtree_t *inst, char *key) {
 	if(!inst || !key) return -1;
-	char *str = kvs_rbtree_get(inst, key);
-	if(!str) return 1; //不存在
-	else return 0;
+	rbtree_node *node = rbtree_search(inst, key);
+	if(!node) return -1; //不存在
+	if(node == inst->nil) return -1;
+	return 0;
 }
 

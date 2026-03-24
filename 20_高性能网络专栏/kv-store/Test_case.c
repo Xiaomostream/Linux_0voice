@@ -34,7 +34,7 @@ void testcase(int connfd, char *msg, char *pattern, char *casename) {
     recv_msg(connfd, result, MAX_MSG_LENGTH);
 
     if(strcmp(result, pattern) == 0) {
-        printf("==> PASS -> %s\n", casename);
+        //printf("==> PASS -> %s\n", casename);
     } else {
         printf("==> FAILED -> %s, '%s' != '%s'\n", casename, result, pattern);
         exit(1);
@@ -80,7 +80,110 @@ void array_testcase_10w(int connfd) {
 
 }
 
-void rbtree_testcase_10w(int connfd) {
+void rbtree_testcase_unit_10w(int connfd) {
+    int count = 1000;
+    struct timeval tv_begin;
+    gettimeofday(&tv_begin, NULL);
+    for (int i = 0; i < count; i ++ ) {
+        testcase(connfd, "RSET Teacher King", "OK\r\n", "RSET-Teacher");
+        testcase(connfd, "RGET Teacher", "King\r\n", "RGET_Teacher");
+        testcase(connfd, "RMOD Teacher Xiaomo", "OK\r\n", "RMOD_Teacher");
+        testcase(connfd, "RGET Teacher", "Xiaomo\r\n", "RGET_Teacher");
+        testcase(connfd, "REXIST Teacher", "EXIST\r\n", "REXIST_Teacher");
+        testcase(connfd, "RDEL Teacher", "OK\r\n", "RDEL_Teacher");
+        testcase(connfd, "REXIST Teacher", "NOT EXIST\r\n", "REXIST_Teacher");
+        testcase(connfd, "RGET Teacher", "NOT EXIST\r\n", "RGET_Teacher");
+        testcase(connfd, "RMOD Teacher King", "NOT EXIST\r\n", "RMOD_Teacher");
+    }
+    struct timeval tv_end;
+    gettimeofday(&tv_end, NULL);
+    int time_used = TIME_SUB_MS(tv_end, tv_begin);
+
+    printf("array testcase --> time_used: %d, qps: %d\n", time_used, 9*count*1000 / time_used);
+
+}
+
+void rbtree_testcase_crowd_10w(int connfd) {
+    int count = 1000;
+    struct timeval tv_begin;
+    gettimeofday(&tv_begin, NULL);
+    // 1. RSET Teacher%d King%d
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "RSET Teacher%d King%d", i, i);
+        testcase(connfd, cmd, "OK\r\n", "RSET-Teacher");
+    }
+
+    // 2. RGET Teacher%d
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        char exp[128] = {0};
+        sprintf(cmd, "RGET Teacher%d", i);
+        sprintf(exp, "King%d\r\n", i);
+        testcase(connfd, cmd, exp, "RGET_Teacher");
+    }
+
+    // 3. RMOD Teacher%d Xiaomo%d
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "RMOD Teacher%d Xiaomo%d", i, i);
+        testcase(connfd, cmd, "OK\r\n", "RMOD_Teacher");
+    }
+
+    // 4. RGET Teacher%d (验证修改后的值)
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        char exp[128] = {0};
+        sprintf(cmd, "RGET Teacher%d", i);
+        sprintf(exp, "Xiaomo%d\r\n", i);
+        testcase(connfd, cmd, exp, "RGET_Teacher");
+    }
+
+    // 5. REXIST Teacher%d (应该存在)
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "REXIST Teacher%d", i);
+        testcase(connfd, cmd, "EXIST\r\n", "REXIST_Teacher");
+    }
+
+    // 6. RDEL Teacher%d
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "RDEL Teacher%d", i);
+        testcase(connfd, cmd, "OK\r\n", "RDEL_Teacher");
+    }
+
+    // 7. REXIST Teacher%d (应该不存在)
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "REXIST Teacher%d", i);
+        testcase(connfd, cmd, "NOT EXIST\r\n", "REXIST_Teacher");
+    }
+
+    // 8. RGET Teacher%d (应该不存在)
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "RGET Teacher%d", i);
+        testcase(connfd, cmd, "NOT EXIST\r\n", "RGET_Teacher");
+    }
+
+    // 9. RMOD Teacher%d King%d (对不存在的Key进行修改)
+    for (int i = 0; i < count; i ++ ) {
+        char cmd[128] = {0};
+        sprintf(cmd, "RMOD Teacher%d King%d", i, i);
+        testcase(connfd, cmd, "NOT EXIST\r\n", "RMOD_Teacher");
+    }
+
+
+    struct timeval tv_end;
+    gettimeofday(&tv_end, NULL);
+    int time_used = TIME_SUB_MS(tv_end, tv_begin);
+
+    printf("array testcase --> time_used: %d, qps: %d\n", time_used, 9*count*1000 / time_used);
+
+}
+
+void hash_testcase_unit_10w(int connfd) {
     int count = 1;
     struct timeval tv_begin;
     gettimeofday(&tv_begin, NULL);
@@ -103,10 +206,9 @@ void rbtree_testcase_10w(int connfd) {
 
 }
 
-
-// ./Test_case 192.168.66.130 8888
+// ./Test_case 192.168.66.130 8888 0
 int main(int argc, char *argv[]) {
-    if(argc != 3) {
+    if(argc != 4) {
         printf("Params error\n");
         return -1;
     }
@@ -114,7 +216,13 @@ int main(int argc, char *argv[]) {
     char *ip = argv[1];
     unsigned short port = atoi(argv[2]);
     int connfd = connect_tcpserver(ip, port);
+    int mode = atoi(argv[3]);
 
-    rbtree_testcase_10w(connfd);
+    if(mode == 0)
+        array_testcase_10w(connfd);
+    else if(mode == 1)
+        rbtree_testcase_unit_10w(connfd);
+    else 
+        rbtree_testcase_crowd_10w(connfd);
     return 0;
 }

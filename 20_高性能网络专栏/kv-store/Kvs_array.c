@@ -52,7 +52,7 @@ char* kvs_array_get(kvs_array_t *inst, char *key) {
  */
 int kvs_array_set(kvs_array_t *inst, char *key, char *value) {
     if(inst == NULL || key == NULL || value == NULL) return -1;
-    if(inst->total == KVS_ARRAY_SIZE && inst->idx == KVS_ARRAY_SIZE-1) return -1;
+    if(inst->total == KVS_ARRAY_SIZE) return -1;
 
     //如果当前key已经存在
     char *str = kvs_array_get(inst, key);
@@ -111,7 +111,9 @@ int kvs_array_del(kvs_array_t *inst, char *key) {
             kvs_free(inst->table[i].value);
             inst->table[i].value = NULL;
 
-            inst->idx = i;
+            if(inst->total-1 == i) { //解决大于1024的情况
+                inst->total --;
+            }
             return 0;
         }
     }
@@ -124,7 +126,9 @@ int kvs_array_del(kvs_array_t *inst, char *key) {
  */
 int kvs_array_mod(kvs_array_t *inst, char *key, char *value) {
     if(inst == NULL || key == NULL || value == NULL) return -1;
-    
+    if(inst->total == 0) {
+        return 1;
+    }
     int i = 0;
     for (i = 0; i < inst->total; i ++) {
         if(inst->table[i].key == NULL) {
